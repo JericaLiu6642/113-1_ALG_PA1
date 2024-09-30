@@ -10,6 +10,7 @@
 #include "sort_tool.h"
 #include<iostream>
 #include<ctime>
+#include<climits>
 // Constructor
 SortTool::SortTool() {}
 
@@ -109,11 +110,21 @@ void SortTool::Merge(vector<int>& data, int low, int middle1, int middle2, int h
     for(int i = 0; i < n2; i++){
         R[i] = data[middle2 + i];
     }
-    L[n1] = INT_MAX;
-    R[n2] = INT_MAX;
+    L[n1] = INT_MIN;
+    R[n2] = INT_MIN;
     int i = 0;
     int j = 0;
     for(int k = low; k <= high; k++){
+        if(L[i] == INT_MIN){
+            data[k] = R[j];
+            j++;
+            continue;
+        } 
+        if(R[j] == INT_MIN){
+            data[k] = L[i];
+            i++;
+            continue;
+        }
         if(L[i] <= R[j]){
             data[k] = L[i];
             i++;
@@ -140,7 +151,7 @@ void SortTool::BottomUpMergeSort(vector<int>& data)
   int groupMem = 1;
   while(numGroup > 1){
     int i = 0;
-    while(i < data.size - 1){
+    while(i < data.size() - 1){
         Merge(data, i, i + groupMem - 1, i + groupMem, i + 2 * groupMem - 1);
         i += 2 * groupMem;
     }
