@@ -31,6 +31,7 @@ void SortTool::InsertionSort(vector<int>& data) {
 
 // Quick sort method
 void SortTool::QuickSort(vector<int>& data,int f){
+    if (data.empty()) return;
     QuickSortSubVector(data, 0, data.size() - 1, f);
 }
 // Sort subvector (Quick sort)
@@ -49,8 +50,13 @@ void SortTool::QuickSortSubVector(vector<int>& data, int low, int high, const in
         else{
             pivot = RandomizedPartition(data, low, high);
         }
-        QuickSortSubVector(data, low, pivot - 1, flag);
-        QuickSortSubVector(data, pivot + 1, high, flag);
+        // Ensure that we don’t have infinite recursion
+        if (pivot > low) {
+            QuickSortSubVector(data, low, pivot - 1, flag);  // Sort left part
+        }
+        if (pivot < high) {
+            QuickSortSubVector(data, pivot + 1, high, flag); // Sort right part
+        }
     }
 }
 int SortTool::RandomizedPartition(vector<int>& data, int low, int high){
@@ -127,28 +133,47 @@ void SortTool::Merge(vector<int>& data, int low, int middle1, int middle2, int h
 }
 
 // bottom-up style implementation of merge sort
+// void SortTool::BottomUpMergeSort(vector<int>& data) 
+// {
+//   /*TODO :
+//     Implement merge sort in bottom-up style, in other words,
+//     without recursive function calls.
+//     Hint: 
+//     1. Divide data to n groups of one data each group
+//     2. Iteratively merge each pair of 2 neighbor groups into one larger group
+//     3. Finally we obtain exactly one sorted group
+//   */
+//   int numGroup = data.size();
+//   int groupMem = 1;
+//   while(numGroup > 1){
+//     int i = 0;
+//     while(i < data.size() - 1){
+//         Merge(data, i, i + groupMem - 1, i + groupMem, i + 2 * groupMem - 1);
+//         i += 2 * groupMem;
+//     }
+//     numGroup /= 2;
+//     groupMem *= 2;
+//   }
+// }
+
 void SortTool::BottomUpMergeSort(vector<int>& data) 
 {
-  /*TODO :
-    Implement merge sort in bottom-up style, in other words,
-    without recursive function calls.
-    Hint: 
-    1. Divide data to n groups of one data each group
-    2. Iteratively merge each pair of 2 neighbor groups into one larger group
-    3. Finally we obtain exactly one sorted group
-  */
-  int numGroup = data.size();
-  int groupMem = 1;
-  while(numGroup > 1){
-    int i = 0;
-    while(i < data.size() - 1){
-        Merge(data, i, i + groupMem - 1, i + groupMem, i + 2 * groupMem - 1);
-        i += 2 * groupMem;
+    int n = data.size();
+    int groupMem = 1; 
+    while (groupMem < n) {
+        int i = 0;
+        while (i + groupMem < n) {
+            int low = i;
+            int middle1 = i + groupMem - 1;
+            int middle2 = i + groupMem;
+            int high = min(i + 2 * groupMem - 1, n - 1);  // Ensure high doesn't exceed array size
+            Merge(data, low, middle1, middle2, high);
+            i += 2 * groupMem;
+        }
+        groupMem *= 2;
     }
-    numGroup /= 2;
-    groupMem *= 2;
-  }
 }
+
 
 // Heap sort method, be aware that you are NOT required to implement heap sort in PA1
 void SortTool::HeapSort(vector<int>& data) {
