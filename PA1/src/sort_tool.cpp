@@ -88,7 +88,7 @@ void SortTool::MergeSortSubVector(vector<int>& data, int low, int high) {
     // Hint : recursively call itself
     //        Merge function is needed
     if(low < high){
-        int middle1 = (low + high) / 2;
+        int middle1 = low + (high - low) / 2;
         int middle2 = middle1 + 1;
         MergeSortSubVector(data, low, middle1);
         MergeSortSubVector(data, middle2, high);
@@ -100,8 +100,8 @@ void SortTool::MergeSortSubVector(vector<int>& data, int low, int high) {
 void SortTool::Merge(vector<int>& data, int low, int middle1, int middle2, int high) {
     // Function : Merge two sorted subvector
     // TODO : Please complete the function
-    int n1 = low - middle1 + 1;
-    int n2 = high - middle1;
+    int n1 = middle1 - low + 1;
+    int n2 = high - middle2 + 1;
     vector<int> L(n1 + 1);
     vector<int> R(n2 + 1);
     for(int i = 0; i < n1; i++){
@@ -110,26 +110,16 @@ void SortTool::Merge(vector<int>& data, int low, int middle1, int middle2, int h
     for(int i = 0; i < n2; i++){
         R[i] = data[middle2 + i];
     }
-    L[n1] = INT_MIN;
-    R[n2] = INT_MIN;
+    L[n1] = INT_MAX;
+    R[n2] = INT_MAX;
     int i = 0;
     int j = 0;
     for(int k = low; k <= high; k++){
-        if(L[i] == INT_MIN){
-            data[k] = R[j];
-            j++;
-            continue;
+        if(i < n1 && (j >= n2 || L[i] <= R[j])) {
+            data[k] = L[i];
+            i++;
         } 
-        if(R[j] == INT_MIN){
-            data[k] = L[i];
-            i++;
-            continue;
-        }
-        if(L[i] <= R[j]){
-            data[k] = L[i];
-            i++;
-        }
-        else{
+        else if (j < n2) {
             data[k] = R[j];
             j++;
         }

@@ -1,0 +1,157 @@
+#!/bin/bash
+set -e
+
+# Define valid algorithms, sizes, and cases
+VALID_ALGORITHMS=("MS" "QS" "RQS" "BMS" "IS")
+VALID_SIZES=(5 1000 2000 4000 8000 16000 32000 1000000)
+VALID_CASES=("case1" "case2" "case3")
+
+# Define color codes
+COLOR_ALGORITHM="\e[32m" # Green
+COLOR_SIZE="\e[96m"       # Blue
+COLOR_CASE="\e[35m"       # Magenta
+COLOR_RESET="\e[0m"       # Reset color
+
+# Function to check if an element is in an array
+contains_element() {
+    local element="$1"
+    shift
+    for e; do
+        if [[ "$e" == "$element" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Function to display usage instructions
+display_help() {
+    echo "Usage: rv <algorithm> [<size>] [<case>]"
+    echo "  <algorithm> : One of {MS, QS, RQS, BMS, IS}"
+    echo "  <size>      : One of {5, 1000, 2000, 4000, 8000, 16000, 32000, 1000000}"
+    echo "  <case>      : One of {case1, case2, case3} (case1 required if size is 5)"
+    echo "Please ensure you provide valid inputs."
+}
+
+# Initialize an associative array to track results
+declare -A results
+
+rv() {
+    # Check for the number of arguments
+    if [[ $# -lt 1 || $# -gt 3 ]]; then
+        display_help
+        return 1
+    fi
+
+    ALGORITHM="$1"
+    SIZE_OR_CASE="$2"
+    CASE="${3:-}"
+
+    # Validate the algorithm
+    if ! contains_element "$ALGORITHM" "${VALID_ALGORITHMS[@]}"; then
+        echo "Invalid algorithm provided."
+        display_help
+        return 1
+    fi
+
+    # Check if the second argument is a valid case first
+    if contains_element "$SIZE_OR_CASE" "${VALID_CASES[@]}"; then
+        CASE="$SIZE_OR_CASE"
+        # Run for all valid sizes with the specified case
+        for size in "${VALID_SIZES[@]}"; do
+            if [[ "$size" -eq 5 && "$CASE" != "case1" ]]; then
+                echo "If size is 5, case must be case1. Skipping size $size."
+                continue
+            fi
+            echo -e "Executing: ${COLOR_ALGORITHM}$ALGORITHM${COLOR_RESET} with size ${COLOR_SIZE}$size${COLOR_RESET} and ${COLOR_CASE}$CASE${COLOR_RESET}"
+            execute_sort "$ALGORITHM" "$size" "$CASE"
+            results["$ALGORITHM,$size,$CASE"]="Executed"
+        done
+
+    # If the second argument is a valid size
+    elif [[ "$SIZE_OR_CASE" =~ ^[0-9]+$ ]]; then
+        SIZE="$SIZE_OR_CASE"
+        if ! contains_element "$SIZE" "${VALID_SIZES[@]}"; then
+            echo "Invalid size provided."
+            display_help
+            return 1
+        fi
+
+        # Validate case only if size is 5
+        if [[ "$SIZE" -eq 5 && "$CASE" != "case1" ]]; then
+            echo "If size is 5, case must be case1."
+            display_help
+            return 1
+        fi
+
+        # Execute for all cases if no specific case was given
+        if [[ -z "$CASE" ]]; then
+            for c in "${VALID_CASES[@]}"; do
+                echo -e "Executing: ${COLOR_ALGORITHM}$ALGORITHM${COLOR_RESET} with size ${COLOR_SIZE}$SIZE${COLOR_RESET} and ${COLOR_CASE}$c${COLOR_RESET}"
+                execute_sort "$ALGORITHM" "$SIZE" "$c"
+                results["$ALGORITHM,$SIZE,$c"]="Executed"
+            done
+        else
+            # Execute for the specific case
+            echo -e "Executing: ${COLOR_ALGORITHM}$ALGORITHM${COLOR_RESET} with size ${COLOR_SIZE}$SIZE${COLOR_RESET} and ${COLOR_CASE}$CASE${COLOR_RESET}"
+            execute_sort "$ALGORITHM" "$SIZE" "$CASE"
+            results["$ALGORITHM,$SIZE,$CASE"]="Executed"
+        fi
+
+    # Otherwise, display an error
+    else
+        echo "Invalid size or case provided."
+        display_help
+        return 1
+    fi
+
+    # Print the results table
+    print_results
+}
+
+execute_sort() {
+    local algorithm="$1"
+    local size="$2"
+    local case="$3"
+
+    # Create the output directory if it doesn't exist
+    output_dir="./outputs/$algorithm"
+    mkdir -p "$output_dir"
+
+    output_file="$output_dir/${algorithm}${size}.${case}.out"
+
+    # Execute the sort command
+    /home/jerica/ALG-PA1/PA1/PA1/bin/NTU_sort -"$algorithm" "/home/jerica/ALG-PA1/PA1/PA1/inputs/$size.$case.in" "$output_file"
+    echo -e "output results are stored into $output_file"
+    # Execute the result checker
+    /home/jerica/ALG-PA1/PA1/PA1/utility/PA1_Result_Checker "/home/jerica/ALG-PA1/PA1/PA1/inputs/$size.$case.in" "$output_file"
+}
+
+print_results() {
+    echo
+    echo "----------------------------------------------"
+    echo "|        Algorithm      |    Result        |"
+    echo "----------------------------------------------"
+    
+    # Extract and sort results based on size
+    for key in "${!results[@]}"; do
+        IFS=',' read -r alg size case <<< "$key"
+        entries+=("$alg,$size,$case,${results[$key]}")
+    done
+
+    # Sort the entries by size
+    IFS=$'\n' sorted_entries=($(sort -t, -k2n <<<"${entries[*]}"))
+    unset IFS
+
+    # Print sorted results
+    for entry in "${sorted_entries[@]}"; do
+        IFS=',' read -r alg size case result <<< "$entry"
+        printf "| %-20s | %-15s |\n" "$alg (Size: $size, Case: $case)" "$result"
+    done
+
+    echo "----------------------------------------------"
+    echo "MAKE SURE THAT THIS SCRIPT IS CALLED FROM ~/PA/PA1, OR THE RESULTS WOUND'T BE STORED CORRECTLY"
+}
+
+rv "$@"
+
