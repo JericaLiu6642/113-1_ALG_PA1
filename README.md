@@ -64,7 +64,7 @@ Implemented in `sort_tool.cpp`:
 
 ## 📁 Project Structure
 ```
-<student_id>_pa1/
+PA1/
 ├── bin/                # Compiled binary (NTU_sort)
 ├── doc/                # Contains report.pdf
 ├── inputs/             # Input test cases (excluded in submission)
@@ -73,8 +73,7 @@ Implemented in `sort_tool.cpp`:
 ├── lib/                # tm_usage library for timing/memory
 ├── utility/            # Result checker, gnuplot scripts
 ├── makefile            # Build instructions
-├── report.pdf          # Report comparing sort performance
-└── README              # This README file
+└── report.pdf          # Report comparing sort performance
 ```
 
 ## 📄 Input and Output Format
